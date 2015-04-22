@@ -1,0 +1,11 @@
+<com.billybyte.spanjava.mains.RunBuildSettlesImpVolFromSpan_-Args>
+  <mongoIp>127.0.0.1</mongoIp>
+  <mongoPort>27022</mongoPort>
+  <needsAuth>false</needsAuth>
+  <ftpArgsXmlPath>./ftpArgs.xml</ftpArgsXmlPath>
+  <spanFileNames>
+  	<string>./unzipFolder/cme.20130412.s.pa2</string>
+  	<string>./unzipFolder/nyb.20130412.s.pa2</string>
+  	<string>./unzipFolder/ice.20130412.pa5</string>
+  </spanFileNames>
+</com.billybyte.spanjava.mains.RunBuildSettlesImpVolFromSpan_-Args>
