@@ -1,0 +1,8 @@
+<com.billybyte.spanjava.mains.RunBuildSettlesImpVolFromSpan_-Args>
+  <mongoIp>127.0.0.1</mongoIp>
+  <mongoPort>27022</mongoPort>
+  <needsAuth>false</needsAuth>
+  <ftpArgsXmlPath>ftpArgs.xml</ftpArgsXmlPath>
+	<clearSettles>true</clearSettles>
+	<clearSpan>true</clearSpan>
+</com.billybyte.spanjava.mains.RunBuildSettlesImpVolFromSpan_-Args>

@@ -1,0 +1,10 @@
+target/*
+unzipFolder/*
+zipFolder/*
+.settings/*
+.classpath
+*.csv
+*.txt
+*.zip
+
+/target
