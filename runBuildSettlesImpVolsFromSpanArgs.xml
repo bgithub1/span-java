@@ -3,6 +3,4 @@
   <mongoPort>27022</mongoPort>
   <needsAuth>false</needsAuth>
   <ftpArgsXmlPath>ftpArgs.xml</ftpArgsXmlPath>
-<!--  <ftpArgsResourceClassName>com.billybyte.spanjava.resources.SpanUtils</ftpArgsResourceClassName>-->
-
 </com.billybyte.spanjava.mains.RunBuildSettlesImpVolFromSpan_-Args>

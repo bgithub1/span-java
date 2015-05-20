@@ -141,9 +141,6 @@ public class FindFutImpVolFromOptChain {
 				String[] shortArr = shortName.split("\\.");
 				String convKey = shortArr[0]+"."+shortArr[1]+"."+shortArr[2];
 				String contract = shortArr[0]+"."+shortArr[1]+"."+shortArr[2]+"."+shortArr[3]+"."+shortArr[4];
-//				if((convKey.contains("GOIL"))){
-//					Utils.prtObErrMess(FindFutImpVolFromOptChain.class, "debug : " +convKey);
-//				}
 				if(bestOptSymbolMap.containsKey(convKey)) {
 					contract = contract.replace(convKey, bestOptSymbolMap.get(convKey));
 				} else {
