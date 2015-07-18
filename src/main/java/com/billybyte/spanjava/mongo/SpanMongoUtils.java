@@ -67,6 +67,12 @@ public class SpanMongoUtils {
 	public static String HIST_SETTLES_DB = "spanRecHistSettlesDb"; // "spanHistSettlesDb"
 	public static String HIST_SETTLES_CL = "spanRecHistSettlesColl"; // "spanHistSettlesCl"
 	
+	public static String SECDEF_DB = "spanSecDefDb"; // "secDefDb"
+	public static String SECDEF_CL = "spanSecDefColl"; // "secDefColl"
+
+	public static String UNDER_SNINFO_DB = "spanUnderSnInfoDb"; // "spanUnderSecDefDb"
+	public static String UNDER_SNINFO_COLL = "spanUnderSnInfoColl"; // "spanUnderSecDefColl"
+
 	public static void batchInsert(DBCollection coll, List<MongoDoc> docList) {
 		for(MongoDoc doc:docList) {
 			try {

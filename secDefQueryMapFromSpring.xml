@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="
+			http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+			http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd">
+	
+	<!-- 
+		All of the sec def queries in this file should be of a unique class
+		so that they can be found by the any user of the map, by
+		iterating through the map values (all of which are queries) and
+		finding the value that has a specific class type. 
+	-->
+		
+	<bean id="secDefFromMongo" class="com.billybyte.marketdata.SecDefQuerySpanMongo">
+		<constructor-arg type="java.lang.String" value="127.0.0.1" />
+		<constructor-arg type="java.lang.Integer" value="27022" />
+		<constructor-arg type="java.lang.Boolean" value="false" />
+	</bean>
+	
+	<bean id="underSecDefFromSpanMongo" class ="com.billybyte.marketdata.UnderlyingSecDefQueryFromSpan">
+		<constructor-arg type="java.lang.String" value="127.0.0.1" />
+		<constructor-arg type="java.lang.Integer" value="27022" />
+	</bean>
+	
+	<!-- As stated above: please populate this map with UNIQUE class types -->
+	<util:map id="sdQueryMap"  value-type="com.billybyte.commoninterfaces.QueryInterface">
+		<entry key="spanSecDefQuery" value-ref="secDefFromMongo"/>
+		<entry key="underSecDefFromSpanQuery" value-ref="underSecDefFromSpanMongo"/>
+	</util:map>
+	 
+</beans>

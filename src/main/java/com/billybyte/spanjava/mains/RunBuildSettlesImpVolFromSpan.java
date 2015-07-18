@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.billybyte.commoninterfaces.QueryInterface;
+import com.billybyte.commonstaticmethods.Dates;
 import com.billybyte.commonstaticmethods.Utils;
 import com.billybyte.marketdata.SecDef;
 import com.billybyte.marketdata.SecDefQueryAllMarkets;
@@ -18,7 +19,6 @@ import com.billybyte.spanjava.mongo.SpanMongoUtils;
 import com.billybyte.spanjava.mongo.helpers.FlattenCombCommDb;
 import com.billybyte.spanjava.mongo.helpers.FlattenInterCommSpreadColl;
 import com.billybyte.spanjava.parsers.ice.ParseIceSpanFileToMongoSettle;
-import com.billybyte.spanjava.resources.SpanUtils;
 import com.billybyte.spanjava.utils.FtpFiles;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
@@ -91,15 +91,6 @@ public class RunBuildSettlesImpVolFromSpan {
 	
 	
 	public static void main(String[] args) {
-//		Args.writeXmlExample("./test.xml");
-//		String mongoIp = args[0];
-//		Integer mongoPort = Integer.parseInt(args[1]);
-//		Boolean needsAuth = Boolean.parseBoolean(args[2]);
-//		String mongoUser = args[3]; // use null if needsAuth is false
-//		String mongoPw = args[4];  // use null if needsAuth is false
-//		String cmeFile = args[5]; // like cme.s.pa2
-//		String nybFile = args[6]; // like nyb.20130326.s.pa2
-//		String iceFile = (args.length>7) ? args[7] : null; // like ice.20130326.pa5
 
 		int k = 0;
 		String argsXmlFileName = args[k];
@@ -135,26 +126,25 @@ public class RunBuildSettlesImpVolFromSpan {
 		if(xsArgs.spanFileNames==null){
 			String ftpArgsPath = xsArgs.ftpArgsXmlPath;
 			String ftpArgsResourcePath = xsArgs.ftpArgsResourceClassName;
-		
 			FtpFiles ftpFiles = 
 					new FtpFiles(ftpArgsPath, ftpArgsResourcePath);
+			
 			spanFileNames = ftpFiles.unZipFromFtp();
 		}else{
 			spanFileNames = xsArgs.spanFileNames;
 		}
 		
 		
-//		String cmeFile = args[5]; // like cme.s.pa2
-//		String nybFile = args[6]; // like nyb.20130326.s.pa2
-//		String iceFile = (args.length>7) ? args[7] : null; // like ice.20130326.pa5
 
 		try {
 
 			@SuppressWarnings("unchecked")
-			Map<String,String> convMap = Utils.getXmlData(Map.class, SpanUtils.class, "spanConvMap.xml");
+//			Map<String,String> convMap = Utils.getXmlData(Map.class, SpanUtils.class, "spanConvMap.xml");
+			Map<String,String> convMap = Utils.getXmlData(Map.class, null, "spanConvMap.xml");
 
 			@SuppressWarnings("unchecked")
-			Map<String,String> iceConvMap = Utils.getXmlData(Map.class, SpanUtils.class, "iceProdConvMap.xml");
+//			Map<String,String> iceConvMap = Utils.getXmlData(Map.class, SpanUtils.class, "iceProdConvMap.xml");
+			Map<String,String> iceConvMap = Utils.getXmlData(Map.class, null, "iceProdConvMap.xml");
 
 			// build cme and nyb to dbs
 			MongoWrapper m = new MongoWrapper(mongoIp,mongoPort);
@@ -216,6 +206,7 @@ public class RunBuildSettlesImpVolFromSpan {
 			DBCollection impVolColl = spanImpVolDb.getCollection(SpanMongoUtils.IMP_VOL_CL);
 
 			QueryInterface<String,SecDef> sdQuery = new SecDefQueryAllMarkets();
+//			QueryInterface<String,SecDef> sdQuery = new SecDefQuerySpanMongo(null,null,true);
 			
 			RunGenerateSettlesFromSpanArrayDb settleFromSpanDbBuilder = 
 					new RunGenerateSettlesFromSpanArrayDb(priceSpecColl, spanArrayColl, settleColl, impVolColl, sdQuery);
@@ -223,8 +214,9 @@ public class RunBuildSettlesImpVolFromSpan {
 			if(clearSettles==null || clearSettles){
 				settleFromSpanDbBuilder.clearSettleAndImpVolCollection();
 			}
-			
-			settleFromSpanDbBuilder.processSpan(true, convMap);
+//			DBObject searchObj = new BasicDBObject();
+//			searchObj.put("contractId.prodId.prodCommCode", "LO4");
+			settleFromSpanDbBuilder.processSpan(true, convMap,null);
 			
 			Utils.prtObMess(RunBuildSettlesImpVolFromSpan.class,"Finished building cme and nyb settles from span dbs, starting to build settles from Ice span file");
 			
@@ -247,13 +239,21 @@ public class RunBuildSettlesImpVolFromSpan {
 			FindFutImpVolFromOptChain.insertImpVolsForFutures(settleColl, impVolColl);
 			
 			Calendar endTime = Calendar.getInstance();
+
+			// get odd product settlements and implied vols for stuff like
+			//  LO1 thru LO5, etc.
+			Calendar dateOfSpan = Dates.getSettlementDay(Calendar.getInstance(), 16, 10);
+			RunBuildSecDefsFromSpanArrays oddProductBuilder = 
+					new RunBuildSecDefsFromSpanArrays(mongoIp, mongoPort, "prodIdMap.xml", dateOfSpan);
+			oddProductBuilder.process(true, true);
 			
 			if(runBuildMongoXmlSettlesFromSpanSettles_args!=null){
 				RunBuildMongoXmlSettlesFromSpanSettles.main(runBuildMongoXmlSettlesFromSpanSettles_args);
 			}
 
-			Utils.prtObMess(RunBuildSettlesImpVolFromSpan.class,"Finished - took "+(endTime.getTimeInMillis()-startTime.getTimeInMillis())/1000+" secs");
+
 			
+			Utils.prtObMess(RunBuildSettlesImpVolFromSpan.class,"Finished - took "+(endTime.getTimeInMillis()-startTime.getTimeInMillis())/1000+" secs");
 //			System.exit(0);
 			
 		} catch (UnknownHostException e) {

@@ -259,4 +259,8 @@
     <string>SMC.FUT.GLOBEX</string>
     <string>SMC.FOP.GLOBEX</string>
   </entry>  
+  <entry>
+    <string>CA.FUT.NYMEX</string>
+    <string>WA.FOP.NYMEX</string>
+  </entry>  
  </map>

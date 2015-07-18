@@ -635,4 +635,24 @@
     <string>TF.OOF.NYB</string>
     <string>TF.FOP.NYBOT</string>
   </entry>
+  <entry>
+    <string>LO1.OOF.NYM</string>
+    <string>LO1.FOP.NYMEX</string>
+  </entry>
+  <entry>
+    <string>LO2.OOF.NYM</string>
+    <string>LO2.FOP.NYMEX</string>
+  </entry>
+  <entry>
+    <string>LO3.OOF.NYM</string>
+    <string>LO3.FOP.NYMEX</string>
+  </entry>
+  <entry>
+    <string>LO4.OOF.NYM</string>
+    <string>LO4.FOP.NYMEX</string>
+  </entry>
+  <entry>
+    <string>LO5.OOF.NYM</string>
+    <string>LO5.FOP.NYMEX</string>
+  </entry>
 </map>

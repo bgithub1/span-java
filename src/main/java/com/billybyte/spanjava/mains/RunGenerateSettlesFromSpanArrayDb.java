@@ -3,13 +3,16 @@ package com.billybyte.spanjava.mains;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 import com.billybyte.commoninterfaces.QueryInterface;
@@ -17,11 +20,17 @@ import com.billybyte.commonstaticmethods.Dates;
 import com.billybyte.commonstaticmethods.Utils;
 import com.billybyte.marketdata.SecDef;
 import com.billybyte.marketdata.SecDefQueryAllMarkets;
+import com.billybyte.marketdata.SecDefQuerySpanMongo;
+import com.billybyte.marketdata.ShortNameInfo;
+import com.billybyte.marketdata.SecEnums.SecCurrency;
+import com.billybyte.marketdata.SecEnums.SecExchange;
+import com.billybyte.marketdata.SecEnums.SecSymbolType;
 import com.billybyte.mongo.MongoDoc;
 import com.billybyte.mongo.MongoWrapper;
 import com.billybyte.spanjava.mongo.SpanImpVolDoc;
 import com.billybyte.spanjava.mongo.SpanMongoUtils;
 import com.billybyte.spanjava.mongo.SpanSettleDoc;
+import com.billybyte.spanjava.mongo.expanded.ProductSpecsDoc;
 import com.billybyte.spanjava.mongo.span.RiskArrayDoc;
 import com.billybyte.spanjava.mongo.span.subtypes.SpanProdId;
 import com.billybyte.spanjava.recordtypes.expanded.PriceSpecs;
@@ -62,11 +71,13 @@ public class RunGenerateSettlesFromSpanArrayDb {
 	public static void main(String[] args) {
 		
 		@SuppressWarnings("unchecked")
-		Map<String,String> convMap = Utils.getXmlData(Map.class, SpanUtils.class, "spanConvMap.xml");
+//		Map<String,String> convMap = Utils.getXmlData(Map.class, SpanUtils.class, "spanConvMap.xml");
+		Map<String,String> convMap = Utils.getXmlData(Map.class, null, "spanConvMap.xml");
 		
 		try {
 			
-			MongoWrapper m = new MongoWrapper("127.0.0.1", 27017);
+//			MongoWrapper m = new MongoWrapper("127.0.0.1", 27017);
+			MongoWrapper m = new MongoWrapper("127.0.0.1", 27022);
 			
 			DB priceSpecDb = m.getDB(SpanMongoUtils.PRICE_SPEC_DB);
 			DB cmeSettleDb = m.getDB(SpanMongoUtils.SETTLE_DB);
@@ -81,6 +92,7 @@ public class RunGenerateSettlesFromSpanArrayDb {
 			Calendar beforeTime = Calendar.getInstance();
 			
 			QueryInterface<String,SecDef> sdQuery = new SecDefQueryAllMarkets();
+//			QueryInterface<String,SecDef> sdQuery = new SecDefQuerySpanMongo(null, null, true);
 			
 			RunGenerateSettlesFromSpanArrayDb spanParser = 
 					new RunGenerateSettlesFromSpanArrayDb(priceSpecColl, spanArrayColl, settleColl, impVolColl, sdQuery);
@@ -88,8 +100,12 @@ public class RunGenerateSettlesFromSpanArrayDb {
 			Utils.prt("starting to process the span file...");
 			
 			spanParser.clearSettleAndImpVolCollection();
-			
-			spanParser.processSpan(true, convMap);
+			DBObject searchObj = new BasicDBObject();
+			DBObject searchObjRegex = new BasicDBObject();
+			searchObjRegex.put("$regex", ".");
+			searchObj.put("contractId.prodId.prodCommCode", searchObjRegex);
+//			DBObject searchObj = null;
+			spanParser.processSpan(true, convMap,searchObj);
 
 			Calendar afterTime = Calendar.getInstance();
 
@@ -109,7 +125,7 @@ public class RunGenerateSettlesFromSpanArrayDb {
 		Utils.prt("Span based settle and implied vol collections cleared");
 	}
 	
-	public Integer processSpan(Boolean useConvMap, Map<String,String> convMap) throws IOException {
+	public Integer processSpan(Boolean useConvMap, Map<String,String> convMap,DBObject searchObj) throws IOException {
 		
 		Calendar today = Calendar.getInstance();
 		
@@ -122,7 +138,14 @@ public class RunGenerateSettlesFromSpanArrayDb {
 		
 		int settleRecs = 0;
 		
-		DBCursor cursor = spanArrayColl.find();
+		
+		DBCursor cursor = null;
+		if(searchObj!=null){
+			cursor = spanArrayColl.find(searchObj);
+		}else{
+			cursor = spanArrayColl.find();
+		}
+		
 		
 		try {
 			while(cursor.hasNext()) {
@@ -309,6 +332,7 @@ public class RunGenerateSettlesFromSpanArrayDb {
 		}
 		
 	}
+	
 
 	
 }
