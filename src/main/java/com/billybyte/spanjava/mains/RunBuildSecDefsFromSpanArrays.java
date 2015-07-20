@@ -1,14 +1,19 @@
 package com.billybyte.spanjava.mains;
 
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 import com.billybyte.commoncollections.Tuple;
 import com.billybyte.commonstaticmethods.Dates;
 import com.billybyte.commonstaticmethods.Utils;
 import com.billybyte.marketdata.SecDef;
+import com.billybyte.marketdata.SecDefSimple;
+import com.billybyte.marketdata.SecEnums.SecSymbolType;
+import com.billybyte.marketdata.ShortNameInfo;
 import com.billybyte.spanjava.mongo.FromSpanFilesGenerator;
 import com.billybyte.spanjava.mongo.span.subtypes.SpanProdId;
 import com.billybyte.ui.RedirectedConsoleForJavaProcess;
@@ -126,12 +131,16 @@ public class RunBuildSecDefsFromSpanArrays {
 //				Map<String, SecDef> sdMap = fsg.getSecDefs(dateOfSpan, subList);
 				Tuple<Map<String, SecDef>,Map<String,String>> tuple = fsg.getSecDefs(dateOfSpan, subList);
 				Map<String, SecDef> sdMap = tuple.getT1_instance();
+				// HACK ALERT
+				sdMap = convertSecDefs(sdMap);
 				Utils.prt("SecDefs:");
 				for(String sn : sdMap.keySet()){
 					SecDef sd = sdMap.get(sn);
 					Utils.prt(sd.toString());
 				}
 				Map<String,String> underMap = tuple.getT2_instance();
+				// HACK ALERT
+				underMap = convertUnderShortNames(underMap);
 				Utils.prt("underlyingShortNames:");
 				for(String sn:underMap.keySet()){
 					String underSn = underMap.get(sn);
@@ -152,6 +161,51 @@ public class RunBuildSecDefsFromSpanArrays {
 		}
 		
 		
+	}
+	
+	private Map<String, SecDef> convertSecDefs(Map<String,SecDef> sdMap){
+		// KIND OF A HACK ALERT !!!!!!!!!!!!!
+		// change SecDefSymbolType's here to either FUT or FOP
+		Map<String,SecDef> ret = new HashMap<String, SecDef>();
+		for(Entry<String, SecDef> entry:sdMap.entrySet()){
+			String sn = entry.getKey();
+			SecDef sd = entry.getValue();
+			SecSymbolType newSecSymType = null;
+			if(SecSymbolType.OOF==sd.getSymbolType()){
+				newSecSymType = SecSymbolType.FOP;
+			}else if(SecSymbolType.OOC==sd.getSymbolType()){
+				newSecSymType = SecSymbolType.FOP;
+			}else if(SecSymbolType.CMB==sd.getSymbolType()){
+				newSecSymType = SecSymbolType.FUT;
+			}else{
+				ret.put(sn, sd);
+				continue;
+			}
+			ShortNameInfo newShortNameInfo = 
+					new ShortNameInfo(sd.getSymbol(), newSecSymType, sd.getExchange(), 
+							sd.getCurrency(), sd.getContractYear(), sd.getContractMonth(), 
+							sd.getContractDay(), sd.getRight(), sd.getStrike());
+			String newSn = newShortNameInfo.getShortName();
+			SecDef newSd = 
+					new SecDefSimple(newSn, newShortNameInfo, sd.getExchangeSymbol(), 
+							sd.getExchangePrecision(), sd.getMinTick(), sd.getExpiryYear(), 
+							sd.getExpiryMonth(), sd.getExpiryDay(), sd.getMultiplier(), 
+							sd.getPrimaryExch());
+			ret.put(newSn,newSd);
+		}
+		return ret;
+	}
+	
+	private final Map<String,String> convertUnderShortNames(Map<String,String> underMap){
+		Map<String, String> ret = new HashMap<String, String>();
+		for(Entry<String, String> entry:underMap.entrySet()){
+			String derivSn = entry.getKey();
+			String newDerivSn = derivSn.replace("OOF", "FOP").replace("OOC", "FOP").replace("CMB", "FUT");
+			String underSn = entry.getValue();
+			String newUnderSn = underSn.replace("CMB", "FUT");
+			ret.put(newDerivSn,newUnderSn);
+		}
+		return ret;
 	}
 	
 }
