@@ -72,7 +72,17 @@ public class CmeSpanCalculator extends AbstractSpanCalculator {
 		Map<SpanContractId,BigDecimal> deltaMap = new HashMap<SpanContractId,BigDecimal>();
 		for(SpanContractId id:uniqueIdSet) { 
 			DBObject queryObj = new BasicDBObject();
-			queryObj.put("contractId", id.getDBObject());
+			queryObj.put("contractId.prodId", id.getProdId().getDBObject());
+			if(id.getFutMonth()!=null){
+				queryObj.put("futConMonth", id.getFutMonth());
+			}
+			if(id.getOptRightCode()!=null){
+				queryObj.put("optRightCode", id.getOptRightCode());	
+			}
+			if(id.getStrike()!=null){
+				queryObj.put("optStrike", id.getStrike());	
+			}
+			
 			DBObject riskArrayDoc = riskArrayColl.findOne(queryObj);
 			if(riskArrayDoc==null) {
 				Utils.prtObErrMess(this.getClass(), "Null risk array doc for "+queryObj.toString());

@@ -27,7 +27,7 @@ public class RunCmeSpanCalculator {
 			
 			Gson gson = new Gson();
 			
-			MongoWrapper m = new MongoWrapper("localhost",27017);
+			MongoWrapper m = new MongoWrapper("localhost",27022);
 
 			DB spanArrayDb = m.getDB(SpanMongoUtils.ARRAY_DB);
 			DB flatCombCommDb = m.getDB(SpanMongoUtils.FLAT_COMB_COMM_DB);
@@ -51,24 +51,33 @@ public class RunCmeSpanCalculator {
 							flatInterCommColl, interCommTierColl, delivChargeColl);
 
 			SpanProdId hoProdId = new SpanProdId("NYM", "HO", "FUT");
-			SpanProdId clProdId = new SpanProdId("NYM", "CL", "FUT");
+			SpanProdId clProdId = new SpanProdId("NYM", "NG", "FUT");
 			SpanProdId optProdId = new SpanProdId("NYM", "ON", "OOF");
 
 			DBObject queryObj1 = new BasicDBObject();
 			queryObj1.put("contractId.prodId", hoProdId.getDBObject());
-			queryObj1.put("futConMonth", "201306");
+			queryObj1.put("futConMonth", "201512");
 			
 			DBObject queryObj2 = new BasicDBObject();
 			queryObj2.put("contractId.prodId", clProdId.getDBObject());
-			queryObj2.put("futConMonth", "201306");
+			queryObj2.put("futConMonth", "201512");
 
 			DBObject queryObj3 = new BasicDBObject();
 			queryObj3.put("contractId.prodId", optProdId.getDBObject());
-			queryObj3.put("futConMonth", "201312");
+			queryObj3.put("futConMonth", "201512");
+			queryObj3.put("optRightCode", "C");
+			queryObj3.put("optStrike", "0003000");
+
+			DBObject queryObj4 = new BasicDBObject();
+			queryObj4.put("contractId.prodId", optProdId.getDBObject());
+			queryObj4.put("futConMonth", "201512");
+			queryObj4.put("optRightCode", "P");
+			queryObj4.put("optStrike", "0003000");
 
 			RiskArrayDoc sampleDoc1 = gson.fromJson(riskArrayColl.findOne(queryObj1).toString(), RiskArrayDoc.class);
 			RiskArrayDoc sampleDoc2 = gson.fromJson(riskArrayColl.findOne(queryObj2).toString(), RiskArrayDoc.class);
 			RiskArrayDoc sampleDoc3 = gson.fromJson(riskArrayColl.findOne(queryObj3).toString(), RiskArrayDoc.class);
+			RiskArrayDoc sampleDoc4 = gson.fromJson(riskArrayColl.findOne(queryObj4).toString(), RiskArrayDoc.class);
 			
 			Map<SpanContractId,Integer> posQtyMap = new HashMap<SpanContractId,Integer>();
 			SpanContractId id1 = new SpanContractId(
@@ -89,14 +98,26 @@ public class RunCmeSpanCalculator {
 					sampleDoc1.getContractId().getFutMonth(), sampleDoc1.getContractId().getFutDayWeek(), 
 					sampleDoc1.getContractId().getOptMonth(), sampleDoc1.getContractId().getOptDayWeek(), 
 					sampleDoc3.getContractId().getOptRightCode(), sampleDoc3.getContractId().getStrike());
+			SpanContractId id4 = new SpanContractId(
+					sampleDoc4.getContractId().getProdId().getExchAcro(), 
+					sampleDoc4.getContractId().getProdId().getProdCommCode(), 
+					sampleDoc4.getContractId().getProdId().getProdTypeCode(), 
+					sampleDoc4.getContractId().getFutMonth(), 
+					sampleDoc4.getContractId().getFutDayWeek(), 
+					sampleDoc4.getContractId().getOptMonth(), 
+					sampleDoc4.getContractId().getOptDayWeek(), 
+					sampleDoc4.getContractId().getOptRightCode(), 
+					sampleDoc4.getContractId().getStrike());
 
 			Utils.prt(id1.toString()+","+sampleDoc1.getSettle());
 			Utils.prt(id2.toString()+","+sampleDoc2.getSettle());
 			Utils.prt(id3.toString()+","+sampleDoc3.getSettle());
+			Utils.prt(id4.toString()+","+sampleDoc3.getSettle());
 
-			posQtyMap.put(id1, 10); // ho -3
-			posQtyMap.put(id2, -10); // cl 10
-			posQtyMap.put(id3, 0); // lo -4
+			posQtyMap.put(id1, 0); // 
+			posQtyMap.put(id2, 1); //
+			posQtyMap.put(id3, -1); // 
+			posQtyMap.put(id4, 1); //
 
 			BigDecimal margin = calc.calculateSpanMargin(posQtyMap);
 
