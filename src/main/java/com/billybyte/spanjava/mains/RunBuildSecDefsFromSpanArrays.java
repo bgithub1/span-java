@@ -112,7 +112,7 @@ public class RunBuildSecDefsFromSpanArrays {
 		// first try csv list
 //		String exchProdTypeMapXmlPath = argPairs.get("exchProdTypeMapXmlPath");
 		if(exchProdTypeMapXmlPath!=null){
-			Map<String, String> prodIdMap = Utils.getXmlData(Map.class, null, exchProdTypeMapXmlPath);
+			Map<String, String> prodIdMap = (Map<String,String>)Utils.getXmlData(Map.class, null, exchProdTypeMapXmlPath);
 			prodIdList = fsg.spanProdListFromMap(prodIdMap);
 		}
 		

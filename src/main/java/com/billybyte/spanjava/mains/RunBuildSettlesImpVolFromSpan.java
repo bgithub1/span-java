@@ -140,11 +140,11 @@ public class RunBuildSettlesImpVolFromSpan {
 
 			@SuppressWarnings("unchecked")
 //			Map<String,String> convMap = Utils.getXmlData(Map.class, SpanUtils.class, "spanConvMap.xml");
-			Map<String,String> convMap = Utils.getXmlData(Map.class, null, "spanConvMap.xml");
+			Map<String,String> convMap = (Map<String,String>)Utils.getXmlData(Map.class, null, "spanConvMap.xml");
 
 			@SuppressWarnings("unchecked")
 //			Map<String,String> iceConvMap = Utils.getXmlData(Map.class, SpanUtils.class, "iceProdConvMap.xml");
-			Map<String,String> iceConvMap = Utils.getXmlData(Map.class, null, "iceProdConvMap.xml");
+			Map<String,String> iceConvMap = (Map<String,String>)Utils.getXmlData(Map.class, null, "iceProdConvMap.xml");
 
 			// build cme and nyb to dbs
 			MongoWrapper m = new MongoWrapper(mongoIp,mongoPort);

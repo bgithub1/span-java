@@ -72,7 +72,7 @@ public class RunGenerateSettlesFromSpanArrayDb {
 		
 		@SuppressWarnings("unchecked")
 //		Map<String,String> convMap = Utils.getXmlData(Map.class, SpanUtils.class, "spanConvMap.xml");
-		Map<String,String> convMap = Utils.getXmlData(Map.class, null, "spanConvMap.xml");
+		Map<String,String> convMap = (Map<String,String>)Utils.getXmlData(Map.class, null, "spanConvMap.xml");
 		
 		try {
 			

@@ -55,7 +55,7 @@ public class RunBuildHistoricalFutDbCreate {
 		new RedirectedConsoleForJavaProcess(700, 700,1,1,RunBuildHistoricalFutDbCreate.class.getSimpleName()+" errors",ConsoleType.SYSTEM_ERR);
 		new RedirectedConsoleForJavaProcess(700, 700,701,1,RunBuildHistoricalFutDbCreate.class.getSimpleName()+" status",ConsoleType.SYSTEM_OUT);
 		Map<String,String> ap = 
-				Utils.getArgPairsSeparatedByChar(args, "=");
+				(Map<String,String>)Utils.getArgPairsSeparatedByChar(args, "=");
 		
 		// ****************** get exchange mapping info **************
 		String prodConvMapPath = ap.get("prodConvMapPath");
