@@ -61,7 +61,7 @@ public class RunBuildHistoricalFutDbCreate {
 		String prodConvMapPath = ap.get("prodConvMapPath");
 		Map<String, String> prodConvMap = new HashMap<String, String>();
 		if(prodConvMapPath!=null){
-			prodConvMap = Utils.getXmlData(Map.class, null, prodConvMapPath);
+			prodConvMap = (Map<String, String>)Utils.getXmlData(Map.class, null, prodConvMapPath);
 		}
 		// ****************** get mongo info **************
 		String ip = ap.get("mongoIp");
