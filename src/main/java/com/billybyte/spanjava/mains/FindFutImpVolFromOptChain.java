@@ -87,7 +87,8 @@ public class FindFutImpVolFromOptChain {
 		Gson gson = new Gson();
 		
 		@SuppressWarnings("unchecked")
-		Map<String,String> bestOptSymbolMap = Utils.getXmlData(Map.class, SpanUtils.class, "bestOptSymbolMap.xml");
+//		Map<String,String> bestOptSymbolMap = Utils.getXmlData(Map.class, SpanUtils.class, "bestOptSymbolMap.xml");
+		Map<String,String> bestOptSymbolMap = (Map<String,String>)Utils.getXmlData(Map.class, null, "bestOptSymbolMap.xml");
 
 		Map<String,BigDecimal> impVolMap = new HashMap<String,BigDecimal>();
 		
