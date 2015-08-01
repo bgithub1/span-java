@@ -84,7 +84,8 @@ public class RunBuildIceImpVolsFromCmeProds {
 	public static void buildIceImpVolsFromCmeDb(DBCollection spanSettleColl, DBCollection impVolColl) {
 		
 		@SuppressWarnings("unchecked")
-		Map<String,String> iceCmeAssocMap = Utils.getXmlData(Map.class, SpanUtils.class, "iceToCmeProdConvMap.xml");
+//		Map<String,String> iceCmeAssocMap = Utils.getXmlData(Map.class, SpanUtils.class, "iceToCmeProdConvMap.xml");
+		Map<String,String> iceCmeAssocMap = (Map<String,String>)Utils.getXmlData(Map.class, null, "iceToCmeProdConvMap.xml");
 		for(Entry<String, String> entry : iceCmeAssocMap.entrySet()){
 			updateRecs(entry,spanSettleColl,impVolColl);
 		}
