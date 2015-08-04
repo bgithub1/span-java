@@ -6,15 +6,18 @@
     <string-array>
       <string>ftp://ftp.cmegroup.com/span/data/cme/</string>
       <string>cme.YYYYMMDD.s.pa2</string>
+      <string>spanConvMap.xml</string>
     </string-array>
     <string-array>
       <string>ftp://ftp.cmegroup.com/span/data/nyb/</string>
       <string>nyb.YYYYMMDD.s.pa2</string>
+      <string>spanConvMap.xml</string>
     </string-array>
     <string-array>
       <string>ftp://ftp.cmegroup.com/span/data/ice/</string>
       <string>ice.YYYYMMDD.pa6</string>
       <!-- <string>ice.YYYYMMDD.pa5</string> -->
+      <string>iceProdConvMap.xml</string>
     </string-array>
   </ftpFileNameTemplateList>
   <zipFileDestFolder>zipFolder</zipFileDestFolder>

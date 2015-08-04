@@ -655,4 +655,24 @@
     <string>LO5.OOF.NYM</string>
     <string>LO5.FOP.NYMEX</string>
   </entry>
+  <entry>
+    <string>WA.OOC.NYM</string>
+    <string>WA.FOP.NYMEX</string>
+  </entry>
+  <entry>
+    <string>WB.OOC.NYM</string>
+    <string>WB.FOP.NYMEX</string>
+  </entry>
+  <entry>
+    <string>WC.OOC.NYM</string>
+    <string>WC.FOP.NYMEX</string>
+  </entry>
+  <entry>
+    <string>WM.OOC.NYM</string>
+    <string>WM.FOP.NYMEX</string>
+  </entry>
+  <entry>
+    <string>WZ.OOC.NYM</string>
+    <string>WZ.FOP.NYMEX</string>
+  </entry>
 </map>

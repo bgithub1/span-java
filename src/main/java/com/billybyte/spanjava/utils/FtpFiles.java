@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -14,6 +16,9 @@ import com.billybyte.commonstaticmethods.Dates;
 import com.billybyte.commonstaticmethods.Utils;
 
 public class FtpFiles {
+	private final String argsXmlFileName;
+	private final Class<?> argsXmlResourceClass;
+	
 	/**
 	 * 
 	 * @author bperlman1
@@ -50,12 +55,30 @@ public class FtpFiles {
 			this.zipFileDestFolder = zipFileDestFolder;
 			this.unZipFileDestFolder = unZipFileDestFolder;
 		}
+		public String getYyyyMmDdMast() {
+			return yyyyMmDdMast;
+		}
+		public int getHourOfNewDay() {
+			return hourOfNewDay;
+		}
+		public int getMinOfNewDay() {
+			return minOfNewDay;
+		}
+		public List<String[]> getFtpFileNameTemplateList() {
+			return ftpFileNameTemplateList;
+		}
+		public String getZipFileDestFolder() {
+			return zipFileDestFolder;
+		}
+		public String getUnZipFileDestFolder() {
+			return unZipFileDestFolder;
+		}
+		
+		
 	
 	}
 	
 	
-	private final String argsXmlFileName;
-	private final Class<?> argsXmlResourceClass;
 	
 	public FtpFiles(String argsXmlFileName, String argsXmlResourceClassName){
 		this.argsXmlFileName = argsXmlFileName;
@@ -67,13 +90,17 @@ public class FtpFiles {
 			throw Utils.IllArg(FtpFiles.class, e1.getMessage());
 		}
 	}
+
 	
-	public List<String> unZipFromFtp(FtpArgs ftpArgs) {
+	public static List<String> unZipFromFtp(FtpArgs ftpArgs, Calendar settlementDay) {
 
 		int hourOfNewDay = ftpArgs.hourOfNewDay;
 		int minOfNewDay = ftpArgs.minOfNewDay;
 		
-		Calendar c = Dates.getSettlementDay(Calendar.getInstance(), hourOfNewDay, minOfNewDay);
+		Calendar c = settlementDay;
+		if(c==null){
+			c = Dates.getSettlementDay(Calendar.getInstance(), hourOfNewDay, minOfNewDay);
+		}
 		
 		String yyyyMmDdActual = Dates.getYyyyMmDdFromCalendar(c).toString();
 		// *********** new code 20131007 ***************
@@ -115,7 +142,15 @@ public class FtpFiles {
 			
 			
 			Utils.prt(" *************** downloading ftp file "+fullFtpPath+" **************");
-			Utils.copyFile(fullFtpPath, zipFileDestPath);
+			try {
+				Utils.copyFile(fullFtpPath, zipFileDestPath);
+			} catch (Exception e1) {
+				// if you get an exception, the file might be in the history folder at the exchange for that year
+				//  so append the year to the ftpArgs.zipFileDestFolder and retry
+				fullFtpPath = fullFtpPath.replace(ftpUrlFirstPart, ftpUrlFirstPart+yyyyAct+"/");
+				// try again - if this call throws an exception, then there is a bug that needs to be analyized
+				Utils.copyFile(fullFtpPath, zipFileDestPath);
+			}
 			Utils.prt(" *************** unziping ftp file "+fullFtpPath+ " to " + zipFileDestPath + " **************");
 			try {
 				ZipFile zp = new ZipFile(zipFileDestPath);
@@ -130,7 +165,7 @@ public class FtpFiles {
 				           continue;
 				         }
 
-				         Utils.prtObMess(this.getClass(),"Extracting file: " + entry.getName());
+				         Utils.prtObMess(FtpFiles.class,"Extracting file: " + entry.getName());
 				         String destFilePath = addSlash(ftpArgs.unZipFileDestFolder)+entry.getName();
 				         Utils.copyFile(zp.getInputStream(entry),
 				        		 destFilePath);
@@ -151,9 +186,53 @@ public class FtpFiles {
  		
 		FtpArgs xsArgs = Utils.getXmlData(FtpArgs.class, argsXmlResourceClass, argsXmlFileName);
 		
-		return unZipFromFtp(xsArgs);
+		return unZipFromFtp(xsArgs,null);
 		
 	}
+	
+	public  List<String> unZipFromFtp(Calendar settlementDate) {
+ 		
+		FtpArgs xsArgs = Utils.getXmlData(FtpArgs.class, argsXmlResourceClass, argsXmlFileName);
+		
+		return unZipFromFtp(xsArgs,settlementDate);
+		
+	}
+	
+	/**
+	 * unzip span ftp files from various exchanges for various dates
+	 * @param settlementDateList
+	 * @return
+	 */
+	public Map<Long, List<String>> unZipFromFtp(List<Calendar> settlementDateList){
+		Map<Long, List<String>> ret = new HashMap<Long, List<String>>();
+		for(Calendar settlementDate : settlementDateList){
+			List<String> fileList = unZipFromFtp(settlementDate);
+			if(fileList!=null && fileList.size()>0){
+				Long yyyyMmDd = Dates.getYyyyMmDdFromCalendar(settlementDate);
+				ret.put(yyyyMmDd, fileList);
+			}
+		}
+		return ret;
+	}
+	
+	
+	/**
+	 * unzip span ftp files from various exchanges for various dates
+	 * @param settlementDateList
+	 * @param argsXmlFileName
+	 * @param argsXmlResourceClassName
+	 * @return
+	 */
+	public static Map<Long, List<String>> unZipFromFtp(
+			List<Calendar> settlementDateList,
+			String argsXmlFileName,
+			String argsXmlResourceClassName){
+		FtpFiles ftpFiles = 
+				new FtpFiles(argsXmlFileName, argsXmlResourceClassName);
+		return ftpFiles.unZipFromFtp(settlementDateList);
+		
+	}
+	
 	
 	private static String addSlash(String folder){
 		String ret = folder;

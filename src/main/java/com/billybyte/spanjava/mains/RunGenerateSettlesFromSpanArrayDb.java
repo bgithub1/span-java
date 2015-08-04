@@ -68,16 +68,30 @@ public class RunGenerateSettlesFromSpanArrayDb {
 		this.sdQuery = sdQuery;
 	}
 
+	/**
+	 * 
+	 * @param args
+	 */
 	public static void main(String[] args) {
+		/// get arg pairs 
+		Map<String, String> ap = Utils.getArgPairsSeparatedByChar(args, "=");
+		String mongoIp = ap.get("mongoIp")==null ? "127.0.0.1" : ap.get("mongoIp");
+		String mongoPort = ap.get("mongoPort")==null ? "27022" : ap.get("mongoPort");
+		Integer mport = new Integer(mongoPort);
+		String spanConvMapXml = ap.get("spanConvMapXml")==null ? "spanConvMap.xml" : ap.get("spanConvMapXml");
+		String symbolRegex =  ap.get("symbolRegex")==null ? "." : ap.get("symbolRegex");
+		String typeRegex =  ap.get("typeRegex")==null ? "." : ap.get("typeRegex");
+		String exchRegex =  ap.get("exchRegex")==null ? "." : ap.get("exchRegex");
 		
 		@SuppressWarnings("unchecked")
 //		Map<String,String> convMap = Utils.getXmlData(Map.class, SpanUtils.class, "spanConvMap.xml");
-		Map<String,String> convMap = (Map<String,String>)Utils.getXmlData(Map.class, null, "spanConvMap.xml");
+		Map<String,String> convMap = (Map<String,String>)Utils.getXmlData(Map.class, null, spanConvMapXml);
+	
 		
 		try {
 			
-//			MongoWrapper m = new MongoWrapper("127.0.0.1", 27017);
-			MongoWrapper m = new MongoWrapper("127.0.0.1", 27022);
+			
+			MongoWrapper m = new MongoWrapper(mongoIp, mport);
 			
 			DB priceSpecDb = m.getDB(SpanMongoUtils.PRICE_SPEC_DB);
 			DB cmeSettleDb = m.getDB(SpanMongoUtils.SETTLE_DB);
@@ -92,7 +106,6 @@ public class RunGenerateSettlesFromSpanArrayDb {
 			Calendar beforeTime = Calendar.getInstance();
 			
 			QueryInterface<String,SecDef> sdQuery = new SecDefQueryAllMarkets();
-//			QueryInterface<String,SecDef> sdQuery = new SecDefQuerySpanMongo(null, null, true);
 			
 			RunGenerateSettlesFromSpanArrayDb spanParser = 
 					new RunGenerateSettlesFromSpanArrayDb(priceSpecColl, spanArrayColl, settleColl, impVolColl, sdQuery);
@@ -101,10 +114,20 @@ public class RunGenerateSettlesFromSpanArrayDb {
 			
 			spanParser.clearSettleAndImpVolCollection();
 			DBObject searchObj = new BasicDBObject();
-			DBObject searchObjRegex = new BasicDBObject();
-			searchObjRegex.put("$regex", ".");
-			searchObj.put("contractId.prodId.prodCommCode", searchObjRegex);
-//			DBObject searchObj = null;
+			// symbol regex
+			DBObject searchObjSymbolRegex = new BasicDBObject();
+			searchObjSymbolRegex.put("$regex", symbolRegex);
+			searchObj.put("contractId.prodId.prodCommCode", searchObjSymbolRegex);
+			// type regex
+			DBObject searchObjTypeRegex = new BasicDBObject();
+			searchObjTypeRegex.put("$regex", typeRegex);
+			searchObj.put("contractId.prodId.prodTypeCode", searchObjTypeRegex);
+			// exchange regex
+			DBObject searchObjExchRegex = new BasicDBObject();
+			searchObjExchRegex.put("$regex", exchRegex);
+			searchObj.put("contractId.prodId.exchAcro", searchObjExchRegex);
+
+			// process the settles from the spanArrays
 			spanParser.processSpan(true, convMap,searchObj);
 
 			Calendar afterTime = Calendar.getInstance();

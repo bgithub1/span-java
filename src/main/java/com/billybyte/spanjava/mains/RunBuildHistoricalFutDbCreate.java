@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.Map.Entry;
@@ -25,8 +26,9 @@ import com.billybyte.marketdata.futures.SpanHist;
 import com.billybyte.mongo.MongoCollectionWrapper;
 import com.billybyte.mongo.MongoDatabaseNames;
 import com.billybyte.mongo.MongoDoc;
-
 import com.billybyte.spanjava.utils.CmeSpanUtils.RecordType;
+import com.billybyte.spanjava.utils.FtpFiles.FtpArgs;
+import com.billybyte.spanjava.utils.FtpFiles;
 import com.billybyte.ui.RedirectedConsoleForJavaProcess;
 import com.billybyte.ui.RedirectedConsoleForJavaProcess.ConsoleType;
 import com.mongodb.BasicDBObject;
@@ -45,24 +47,39 @@ public class RunBuildHistoricalFutDbCreate {
 	
 	/**
 	 * 
-	 * @param args  "mongoIp=127.0.0.1" mongoPort=27022 daysBack=60 "spanUnzipFolder=myHome/dbbuild_1_0/unzipFolder" "spanFileTemplate=cme.YYYYMMDD.s.pa2" prodConvMapPath=spanConvMap.xml
+	 * @param args  
+	 * 				redirect=true
+	 * 				"mongoIp=127.0.0.1" 
+	 * 				mongoPort=27022  
+	 * 				"spanUnzipFolder=./unzipFolder" 
+	 * 				daysBack=60 
+	 * 				ftpArgsPath=ftpArgs.xml
+	 * 				
 	 */
 	@SuppressWarnings("unchecked")
 	public static void main(String[] args) {
-		
-		
+		// get when we start to report how long it takes
 		Calendar beg = Calendar.getInstance();
-		new RedirectedConsoleForJavaProcess(700, 700,1,1,RunBuildHistoricalFutDbCreate.class.getSimpleName()+" errors",ConsoleType.SYSTEM_ERR);
-		new RedirectedConsoleForJavaProcess(700, 700,701,1,RunBuildHistoricalFutDbCreate.class.getSimpleName()+" status",ConsoleType.SYSTEM_OUT);
+		
+
 		Map<String,String> ap = 
 				(Map<String,String>)Utils.getArgPairsSeparatedByChar(args, "=");
-		
-		// ****************** get exchange mapping info **************
-		String prodConvMapPath = ap.get("prodConvMapPath");
-		Map<String, String> prodConvMap = new HashMap<String, String>();
-		if(prodConvMapPath!=null){
-			prodConvMap = (Map<String, String>)Utils.getXmlData(Map.class, null, prodConvMapPath);
+		Boolean redirect = 
+				ap.get("redirect")==null ? false : new Boolean(ap.get("redirect"));
+		if(redirect){
+			new RedirectedConsoleForJavaProcess(700, 700,1,1,RunBuildHistoricalFutDbCreate.class.getSimpleName()+" errors",ConsoleType.SYSTEM_ERR);
+			new RedirectedConsoleForJavaProcess(700, 700,701,1,RunBuildHistoricalFutDbCreate.class.getSimpleName()+" status",ConsoleType.SYSTEM_OUT);
 		}
+
+		// ****************** get days to use for history **************
+		int daysBack = new Integer(ap.get("daysBack")) * -1;
+		Calendar endDate = Calendar.getInstance();
+		Calendar startDate = Dates.addBusinessDays("US", endDate,daysBack);
+		// ****************** create span file name list **************
+		List<DateTime> dtList = 
+				Dates.getAllBusinessDays(startDate, endDate);
+		
+		
 		// ****************** get mongo info **************
 		String ip = ap.get("mongoIp");
 		Integer port = new Integer(ap.get("mongoPort"));
@@ -71,24 +88,11 @@ public class RunBuildHistoricalFutDbCreate {
 						ip, port, 
 						MongoDatabaseNames.SPAN_HIST_DB	,
 						MongoDatabaseNames.SPAN_HIST_CL);
-
-		// ****************** get days to use for history **************
-		int daysBack = new Integer(ap.get("daysBack")) * -1;
-		Calendar endDate = Calendar.getInstance();
-		Calendar startDate = Dates.addBusinessDays("US", endDate,daysBack);
+		
 		String spanUnzipFolder = ap.get("spanUnzipFolder");
-		String spanFileTemplate = ap.get("spanFileTemplate");
-		String lastChar = 
-				spanUnzipFolder.substring(spanUnzipFolder.length()-1, spanUnzipFolder.length());
-		if(lastChar.compareTo("/")!=0){
-			spanUnzipFolder = spanUnzipFolder+"/";
-		}
-		// ****************** create span file name list **************
-		List<DateTime> dtList = 
-				Dates.getAllBusinessDays(startDate, endDate);
 		
-		
-		// ****************** drop the index to speed things up ****************
+		// ****************** possibly init the mongo hist db ***********
+		// *** drop the index to speed things up ***
 		Utils.prtObMess(RunBuildHistoricalFutDbCreate.class, "processing : Dropping  indexes for collection " + MongoDatabaseNames.SPAN_HIST_CL );
 
 		List<DBObject> indexes = mcw.getCollection().getIndexInfo();
@@ -100,44 +104,84 @@ public class RunBuildHistoricalFutDbCreate {
 			mcw.getCollection().dropIndex(indexName);
 		}
 		// 
-		// ****************** remove everything ****************
+		// *** remove everything ***
 		Utils.prtObMess(RunBuildHistoricalFutDbCreate.class, "processing : removing all records for  collection " + MongoDatabaseNames.SPAN_HIST_CL );
 		mcw.getCollection().remove(new BasicDBObject());
 		
-		// *******************loop thru each date ***********************
-		for(DateTime dt : dtList){
-			int year = dt.getYear();
-			int month = dt.getMonthOfYear();
-			int day = dt.getDayOfMonth();
-			Integer yyyyMmDd = new Integer(year*100*100 + month*100 + day);
-			String fileName = spanFileTemplate.replace("YYYYMMDD", yyyyMmDd.toString());
-			String filePath =spanUnzipFolder+fileName; 
-			// **********************
-			try {
-				// see if file exists
-				long len = Utils.getFileLength(filePath);
-				if(len<1){
-					// file does not exist, move on
-					Utils.prtObErrMess(RunBuildHistoricalFutDbCreate.class, "no span file for: " + filePath);
-					continue;
-				}
-				List<String> lineData = Utils.getLineData(null, filePath);
-				if(lineData==null || lineData.size()<1){
-					// file does not exist, move on
-					Utils.prtObErrMess(RunBuildHistoricalFutDbCreate.class, "no span file for: " + filePath);
-					continue;
-				}
-				Utils.prtObMess(RunBuildHistoricalFutDbCreate.class, "processing : " + filePath);
-
-				// ****************** CALL processFile here ***********************
-				List<SpanHist> spList = 
-						processFile(yyyyMmDd,lineData,prodConvMap);
-				List<DBObject> dboList = mcw.toDboList(spList);
-				mcw.getCollection().insert(dboList);
-			} catch (Exception e) {
-				e.printStackTrace();
+		
+		
+		
+		// ************** main loop per exchange per day ***************
+		String ftpArgsPath = 
+				ap.get("ftpArgsPath");
+		
+		// get the ftpArgs file
+		FtpArgs xsArgs = Utils.getXmlData(FtpArgs.class, null, ftpArgsPath);
+		// get the name templates, and process all dates for each template
+		for(String[] ftpAddressAndFileTemplate :  xsArgs.getFtpFileNameTemplateList()){
+			// get template
+			String prodConvMapPath = ftpAddressAndFileTemplate[2];
+			// ****************** get exchange mapping info **************
+			Map<String, String> prodConvMap = new HashMap<String, String>();
+			if(prodConvMapPath!=null){
+				prodConvMap = (Map<String, String>)Utils.getXmlData(Map.class, null, prodConvMapPath);
 			}
+			String spanFileTemplate = ftpAddressAndFileTemplate[1];;
+			String lastChar = 
+					spanUnzipFolder.substring(spanUnzipFolder.length()-1, spanUnzipFolder.length());
+			if(lastChar.compareTo("/")!=0){
+				spanUnzipFolder = spanUnzipFolder+"/";
+			}
+
+			// *******************loop thru each date ***********************
+			for(DateTime dt : dtList){
+				int year = dt.getYear();
+				int month = dt.getMonthOfYear();
+				int day = dt.getDayOfMonth();
+				Integer yyyyMmDd = new Integer(year*100*100 + month*100 + day);
+				String fileName = spanFileTemplate.replace("YYYYMMDD", yyyyMmDd.toString());
+				String filePath =spanUnzipFolder+fileName; 
+				// **********************
+				try {
+					// see if file exists
+					long len = Utils.getFileLength(filePath);
+					if(len<1){
+						// if it does not exist, see if we can get it
+						Calendar settlementDay = dt.toCalendar(Locale.US);
+						// force ALL file from ALL EXCHANGES for this date to be unzipped
+						FtpFiles.unZipFromFtp(xsArgs, settlementDay);
+						// if you get here, then try one more time
+						len = Utils.getFileLength(filePath);
+						if(len<1){
+							// file does not exist, move on
+							Utils.prtObErrMess(RunBuildHistoricalFutDbCreate.class, "no span file for: " + filePath);
+							continue;
+						}
+					}
+					List<String> lineData = Utils.getLineData(null, filePath);
+					if(lineData==null || lineData.size()<1){
+						// file does not exist, move on
+						Utils.prtObErrMess(RunBuildHistoricalFutDbCreate.class, "no span file for: " + filePath);
+						continue;
+					}
+					Utils.prtObMess(RunBuildHistoricalFutDbCreate.class, "processing : " + filePath);
+
+					// **********!!!!!!! CALL processFile here !!!!!!!!***************
+					//  ** look at spanFileTemplate to see which exchange we process ** //
+					if(spanFileTemplate.contains("cme") || spanFileTemplate.contains("nyb")){
+						List<SpanHist> spList = 
+								processCmeFile(yyyyMmDd,lineData,prodConvMap);
+						List<DBObject> dboList = mcw.toDboList(spList);
+						mcw.getCollection().insert(dboList);
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+
 		}
+		
+				
 		
 		
 		// set indices		
@@ -154,7 +198,7 @@ public class RunBuildHistoricalFutDbCreate {
 
 	}
 	
-	private static final List<SpanHist> processFile(
+	private static final List<SpanHist> processCmeFile(
 			Integer yyyyMmDd,
 			List<String> lineList,
 			Map<String, String> prodConvMap){
