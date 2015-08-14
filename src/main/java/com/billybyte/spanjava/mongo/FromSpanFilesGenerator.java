@@ -664,7 +664,13 @@ public class FromSpanFilesGenerator {
 		DBObject combcomDbo = spanFlatCombCommColl.find(search).toArray().get(0);
 		FlatCombCommProdIdDoc combcom = gson.fromJson(combcomDbo.toString(), FlatCombCommProdIdDoc.class);
 		
-		String underSymbol = combcom.getCombCommCode().split("-")[1];
+		String[] combcomSplit = combcom.getCombCommCode().split("-");		
+		String underSymbol = null;
+		if(combcomSplit.length>1){
+			underSymbol = combcomSplit[1];
+		}else{
+			underSymbol = combcomSplit[0];
+		}
 		DBObject underSearch = new BasicDBObject();
 		underSearch.put("prodId.prodCommCode", underSymbol);
 		underSearch.put("prodId.exchAcro", optSpanProdId.getExchAcro());

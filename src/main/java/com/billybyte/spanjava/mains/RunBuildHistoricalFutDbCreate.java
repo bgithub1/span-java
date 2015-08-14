@@ -70,6 +70,9 @@ public class RunBuildHistoricalFutDbCreate {
 			new RedirectedConsoleForJavaProcess(700, 700,1,1,RunBuildHistoricalFutDbCreate.class.getSimpleName()+" errors",ConsoleType.SYSTEM_ERR);
 			new RedirectedConsoleForJavaProcess(700, 700,701,1,RunBuildHistoricalFutDbCreate.class.getSimpleName()+" status",ConsoleType.SYSTEM_OUT);
 		}
+		
+		Boolean clearDb = 
+				ap.get("clearDb")==null ? false : new Boolean(ap.get("clearDb"));
 
 		// ****************** get days to use for history **************
 		int daysBack = new Integer(ap.get("daysBack")) * -1;
@@ -92,16 +95,18 @@ public class RunBuildHistoricalFutDbCreate {
 		String spanUnzipFolder = ap.get("spanUnzipFolder");
 		
 		// ****************** possibly init the mongo hist db ***********
-		// *** drop the index to speed things up ***
-		Utils.prtObMess(RunBuildHistoricalFutDbCreate.class, "processing : Dropping  indexes for collection " + MongoDatabaseNames.SPAN_HIST_CL );
+		if(clearDb){
+			// *** drop the index to speed things up ***
+			Utils.prtObMess(RunBuildHistoricalFutDbCreate.class, "processing : Dropping  indexes for collection " + MongoDatabaseNames.SPAN_HIST_CL );
 
-		List<DBObject> indexes = mcw.getCollection().getIndexInfo();
-		for(DBObject index : indexes){
-			if(index.toMap().get("name").toString().contains("_id")){
-				continue;// don't drop the id field
+			List<DBObject> indexes = mcw.getCollection().getIndexInfo();
+			for(DBObject index : indexes){
+				if(index.toMap().get("name").toString().contains("_id")){
+					continue;// don't drop the id field
+				}
+				String indexName = index.toMap().get("name").toString();
+				mcw.getCollection().dropIndex(indexName);
 			}
-			String indexName = index.toMap().get("name").toString();
-			mcw.getCollection().dropIndex(indexName);
 		}
 		// 
 		// *** remove everything ***

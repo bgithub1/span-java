@@ -45,10 +45,10 @@ public class RunBuildSecDefsFromSpanArrays {
 	/**
 	 * 
 	 * @param args Examples: 
-	 * 		"mongoIp=127.0.0.1" mongoPort=27022 "exchProdTypeCsvPath=prodIdCsv.csv "createSettlesImpVols=true" "createSecDefs=true"
+	 * 		"mongoIp=127.0.0.1" mongoPort=27022 "exchProdTypeCsvPath=prodIdCsv.csv" "createSettlesImpVols=true" "createSecDefs=true"
 	 * Alternatively - but NOT recommended:
-	 * 		"mongoIp=127.0.0.1" mongoPort=27022 "exchProdTypeMapXmlPath=prodIdMap.xml "createSettlesImpVols=true" "createSecDefs=true"
-	 * 		"mongoIp=127.0.0.1" mongoPort=27022 "exchProdTypeMapXmlPath=prodIdMap.xml "createSettlesImpVols=false" "createSecDefs=true"
+	 * 		"mongoIp=127.0.0.1" mongoPort=27022 "exchProdTypeMapXmlPath=prodIdMap.xml" "createSettlesImpVols=true" "createSecDefs=true"
+	 * 		"mongoIp=127.0.0.1" mongoPort=27022 "exchProdTypeMapXmlPath=prodIdMap.xml" "createSettlesImpVols=false" "createSecDefs=true"
 	 */
 	public static void main(String[] args) {
 		
